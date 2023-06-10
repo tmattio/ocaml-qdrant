@@ -13,8 +13,6 @@
 
 (license ISC)
 
-(documentation https://ocaml.org/p/qdrant)
-
 (package
  (name qdrant)
  (synopsis "OCaml client for Qdrant vector search engine")
@@ -22,8 +20,7 @@
  (depends
   ocaml
   dune
-  hyper
-  pbrt
+  ocaml-protoc-plugin
   grpc-lwt
   h2
   h2-lwt-unix

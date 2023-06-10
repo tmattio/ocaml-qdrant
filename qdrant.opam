@@ -6,13 +6,11 @@ maintainer: ["Thibaut Mattio <thibaut.mattio@gmail.com>"]
 authors: ["Thibaut Mattio"]
 license: "ISC"
 homepage: "https://github.com/tmattio/qdrant"
-doc: "https://ocaml.org/p/qdrant"
 bug-reports: "https://github.com/tmattio/qdrant/issues"
 depends: [
   "ocaml"
   "dune" {>= "3.8"}
-  "hyper"
-  "pbrt"
+  "ocaml-protoc-plugin"
   "grpc-lwt"
   "h2"
   "h2-lwt-unix"
