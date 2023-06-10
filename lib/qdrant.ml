@@ -2,6 +2,32 @@ type client = { host : string; port : int }
 
 let default_client = { host = "localhost"; port = 6334 }
 
+type code = Grpc.Status.code =
+  | OK
+  | Cancelled
+  | Unknown
+  | Invalid_argument
+  | Deadline_exceeded
+  | Not_found
+  | Already_exists
+  | Permission_denied
+  | Resource_exhausted
+  | Failed_precondition
+  | Aborted
+  | Out_of_range
+  | Unimplemented
+  | Internal
+  | Unavailable
+  | Data_loss
+  | Unauthenticated
+
+type status = { code : code; message : string option }
+
+let status_of_grpc (grpc_status : Grpc.Status.t) : status =
+  let code : code = Grpc.Status.code grpc_status in
+  let message = Grpc.Status.message grpc_status in
+  { code; message }
+
 let create_connection t =
   let open Lwt.Syntax in
   (* Setup Http/2 connection *)
@@ -36,7 +62,7 @@ let request connection mods ~req ~service ~rpc =
              | None -> None))
       ()
   in
-  match result with Ok (x, _) -> Ok x | Error err -> Error err
+  match result with Ok (x, _) -> Ok x | Error err -> Error (status_of_grpc err)
 
 let request_with_default ~default connection mods ~req ~service ~rpc =
   let open Lwt.Syntax in
@@ -175,7 +201,8 @@ let create_collection ~(collection_name : string)
   match result with
   | Error err -> Error err
   | Ok { result = true; time = _ } -> Ok ()
-  | Ok { result = false; time = _ } -> Error (Grpc.Status.v Unknown)
+  | Ok { result = false; time = _ } ->
+      Error (Grpc.Status.v Unknown |> status_of_grpc)
 
 let delete_collection ~collection_name ?timeout t =
   let open Lwt.Syntax in
@@ -183,11 +210,13 @@ let delete_collection ~collection_name ?timeout t =
   let+ result =
     request_with_default connection
       Proto.Collections_service.Qdrant.Collections.delete
-      ~req:(Proto.Collections_service.Qdrant.Collections.Delete.Request.make ~collection_name ?timeout ())
+      ~req:
+        (Proto.Collections_service.Qdrant.Collections.Delete.Request.make
+           ~collection_name ?timeout ())
       ~default:Proto.Collections_service.Qdrant.Collections.Delete.Response.make
       ~service:"qdrant.Collections" ~rpc:"Delete"
   in
   match result with
   | Error err -> Error err
   | Ok { result = true; time = _ } -> Ok ()
-  | Ok { result = false; time = _ } -> Error (Grpc.Status.v Unknown)
+  | Ok { result = false; time = _ } -> Error (Grpc.Status.v Unknown |> status_of_grpc)
