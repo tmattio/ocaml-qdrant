@@ -1,0 +1,57 @@
+(include_subdirs qualified)
+
+(subdir
+ proto
+ (rule
+  (targets google_include)
+  (action
+   (with-stdout-to
+    %{targets}
+    (system "pkg-config protobuf --variable=includedir")))))
+
+(subdir
+ proto
+ (rule
+  (targets
+   collections_service.ml
+   collections.ml
+   json_with_int.ml
+   points_service.ml
+   points.ml
+   qdrant.ml
+   snapshots_service.ml)
+  (mode
+   (promote (until-clean)))
+  (deps
+   (:proto
+    %{project_root}/proto/collections_service.proto
+    %{project_root}/proto/collections.proto
+    %{project_root}/proto/json_with_int.proto
+    %{project_root}/proto/points_service.proto
+    %{project_root}/proto/points.proto
+    %{project_root}/proto/qdrant.proto
+    %{project_root}/proto/snapshots_service.proto)
+   (package ocaml-protoc-plugin))
+  (action
+   (run
+    protoc
+    -I
+    %{read-lines:google_include}
+    -I
+    %{project_root}/proto
+    "--ocaml_out=open=Google_types:."
+    %{proto}))))
+
+(library
+ (name qdrant)
+ (public_name qdrant)
+ (libraries
+  ocaml-protoc-plugin
+  ocaml-protoc-plugin.google_types
+  unix
+  lwt
+  lwt.unix
+  h2
+  h2-lwt-unix
+  grpc
+  grpc-lwt))
