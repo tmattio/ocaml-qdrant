@@ -1,5 +1,7 @@
 # ocaml-qdrant
 
+**STATUS: very experimental and incomplete, not ready for any serious usage**
+
 OCaml client for Qdrant vector search engine.
 
 ## Usage
